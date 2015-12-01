@@ -5,7 +5,6 @@ using System.Collections;
 public class Player : MonoBehaviour {
 
 	//PLAYER CONFIG
-	public int jetpackMaxCharge = 3;
 	public float skinOffset = 0.2f;
 	public float jumpForce = 500f;
 
@@ -14,23 +13,17 @@ public class Player : MonoBehaviour {
 	public AudioClip emptyJetpack;
 
 	//USER INTERFACE
-	public GameObject panelJetpack;
-	public GameObject imageJetpack;
-	public GameObject imageCharge;
-	public Text textEmptyJetpack;
+	private Jetpack jetpack;
 
 	//COMPONENTS
 	private Rigidbody rb;
 	private AudioSource audioSource;
 	private PlayerCamera playerCamera;
-	private Image panelJetpackImage;
-	public Image panelChargeImage;
 	
 	//VARIABLES
-	private int jetpackCurrentCharge;
+
 	
 	void Start () {
-		CheckEditorConfig ();
 		InitializeComponents ();
 		InitializeVariables ();
 		InitializeUserInterface ();
@@ -50,8 +43,7 @@ public class Player : MonoBehaviour {
 		Vector3 dir = _contact.normal.normalized;
 		pos = _contact.point + (dir * (GetComponent<SphereCollider>().radius + skinOffset));
 		gameObject.transform.position = pos;
-		jetpackCurrentCharge = jetpackMaxCharge;
-		SetJetpackState ();
+		jetpack.ResetCharge();
 
 		//if (collision.gameObject.tag == "wall")
 		//Camera.main.transform.localRotation = Quaternion.Euler(collision.transform.up);
@@ -61,62 +53,32 @@ public class Player : MonoBehaviour {
 
 	void Propulse(){
 		if (Input.GetKeyDown (KeyCode.Space)) {
-			if(jetpackCurrentCharge > 0){
+			if(jetpack.GetRemainingCharge() > 0){
 				audioSource.PlayOneShot(jump);
 				rb.isKinematic = false;
 				rb.AddForce(Camera.main.transform.forward * jumpForce);
-				jetpackCurrentCharge--;
-				SetJetpackState();
+
+				jetpack.ConsumeCharge();
+
 			}else{
 				audioSource.PlayOneShot(emptyJetpack);
 			}
 		}
 	}
 
-	void SetJetpackState(){
-		switch(jetpackCurrentCharge){
-		case 2:
-
-			break;
-		case 1:
-
-			break;
-		case 0:
-			imageJetpack.SetActive(false);
-			panelJetpackImage.color = Color.red;
-			textEmptyJetpack.enabled = true;
-			break;
-		default:
-			panelJetpackImage.color = Color.white;
-			imageJetpack.SetActive(true);
-			textEmptyJetpack.enabled = false;
-			break;
-		}
-	}
-
-	void CheckEditorConfig(){
-		jetpackMaxCharge = (jetpackMaxCharge < 3) ? 3 : jetpackMaxCharge;
-	}
-
 	void InitializeComponents(){
 		rb = gameObject.GetComponent<Rigidbody> ();
 		audioSource = gameObject.GetComponent<AudioSource> ();
 		playerCamera = gameObject.GetComponent<PlayerCamera> ();
-		panelJetpackImage = panelJetpack.GetComponent<Image> ();
-		panelChargeImage = panelChargeImage.GetComponent<Image> ();
 	}
 
 	void InitializeVariables(){
-		jetpackCurrentCharge = jetpackMaxCharge;
 		playerCamera.NewAxisX = new Vector3 (0, 1, 0);
 		playerCamera.NewAxisY = new Vector3 (0, 0, 1);
 	}
 
 	void InitializeUserInterface(){
 		Cursor.visible = false;
-
-		panelJetpack.GetComponent<RectTransform> ().sizeDelta = new Vector2 (jetpackMaxCharge * 60, 60);
-		 
-		SetJetpackState ();
+		jetpack = gameObject.GetComponent<Jetpack> ();
 	}
 }
